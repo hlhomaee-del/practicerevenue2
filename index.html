@@ -1,0 +1,835 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Interactive Claims Workflow Lab: Rejections, Denials & Fixes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Merriweather:ital,wght@0,400;0,700;1,400&family=Nunito:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Fira+Code:wght@400;500&display=swap');
+:root{
+--bg:#F0EDE7;--bg2:#FFFCF4;--card:#FFF;--tx:#1A1612;--tx2:#585350;--tx3:#989390;
+--pri:#14588C;--pri2:#0C3C62;--priL:#DDF0FC;
+--grn:#186C3A;--grnL:#DEF4E6;--grn2:#0C4E26;
+--org:#C05200;--orgL:#FFF0E2;
+--red:#AC1C1C;--redL:#FDEAEA;
+--pur:#542B8C;--purL:#ECE4F8;
+--teal:#006660;--tealL:#DCF0EE;
+--gold:#B48800;--goldL:#FFF8DE;
+--rose:#9C0E4E;--roseL:#FBDEE8;
+--navy:#1A2744;--navyL:#E8ECF2;
+--bdr:#D8D2CA;--shd:0 2px 12px rgba(26,22,18,.05);--shd2:0 8px 28px rgba(26,22,18,.09);--shd3:0 12px 40px rgba(26,22,18,.13);
+--r:10px;--r2:14px;--r3:22px;
+--hd:'Merriweather',Georgia,serif;--bd:'Nunito','Segoe UI',sans-serif;--mn:'Fira Code',monospace;
+--ease:cubic-bezier(.4,0,.2,1);
+}
+*{margin:0;padding:0;box-sizing:border-box}html{scroll-behavior:smooth}
+body{font-family:var(--bd);background:var(--bg);color:var(--tx);line-height:1.65;font-size:15px;min-height:100vh}
+body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 30%,rgba(20,88,140,.04),transparent 50%),radial-gradient(ellipse at 80% 70%,rgba(0,102,96,.03),transparent 50%),radial-gradient(ellipse at 50% 50%,rgba(84,43,140,.02),transparent 60%);z-index:-1;pointer-events:none;animation:bgPulse 15s ease infinite}
+@keyframes bgPulse{0%,100%{opacity:1}50%{opacity:.7}}
+
+/* HEADER */
+.hdr{background:linear-gradient(135deg,#FFF,var(--bg2));border-bottom:1px solid var(--bdr);position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.04)}
+.hdr-in{display:flex;align-items:center;justify-content:space-between;padding:8px 20px;max-width:1280px;margin:0 auto}
+.hdr-logo h1{font-family:var(--hd);font-size:14px;font-weight:700;color:var(--pri2);line-height:1.2}
+.hdr-logo span{font-size:10px;color:var(--tx3);letter-spacing:.5px}
+.hdr-st{display:flex;gap:10px;align-items:center}
+.pl{display:flex;align-items:center;gap:3px;padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700}
+.pl-s{background:var(--grnL);color:var(--grn2)}.pl-k{background:var(--goldL);color:#7A5C00}.pl-b{background:var(--purL);color:var(--pur)}
+.snd-b{padding:2px 8px;border-radius:7px;border:1px solid var(--bdr);background:var(--bg);font-size:9px;font-weight:600;color:var(--tx2);cursor:pointer}
+.gp{height:3px;background:var(--bdr)}.gp-f{height:100%;background:linear-gradient(90deg,var(--teal),var(--pri),var(--pur),var(--rose));width:0%;transition:width .7s var(--ease)}
+
+/* NAV */
+.nav-w{background:var(--card);border-bottom:1px solid var(--bdr);overflow-x:auto;scrollbar-width:none}.nav-w::-webkit-scrollbar{display:none}
+.nav{display:flex;max-width:1280px;margin:0 auto;padding:0 6px;gap:1px}
+.nb{flex-shrink:0;padding:7px 10px;border:none;background:0;font-family:var(--bd);font-size:10px;font-weight:500;color:var(--tx3);cursor:pointer;border-bottom:3px solid transparent;transition:.2s;white-space:nowrap}
+.nb:hover{color:var(--pri);background:var(--priL)}.nb.a{color:var(--pri2);font-weight:700;border-bottom-color:var(--pri)}
+.nb .tn{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;background:var(--bdr);font-size:7px;font-weight:800;margin-right:2px}
+.nb.a .tn{background:var(--pri);color:#fff}.nb.d .tn{background:var(--grn);color:#fff}
+
+/* MAIN */
+.mn{max-width:940px;margin:0 auto;padding:20px 14px 60px}
+.pn{display:none;animation:fu .4s var(--ease)}.pn.a{display:block}
+@keyframes fu{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes fi{from{opacity:0}to{opacity:1}}
+@keyframes slideIn{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+
+/* SECTION HEADER */
+.sh{text-align:center;padding:24px 14px;margin-bottom:20px;border-radius:var(--r3);border:1px solid var(--bdr);position:relative;overflow:hidden}
+.sh::before{content:'';position:absolute;top:-30px;right:-30px;width:120px;height:120px;border-radius:50%;background:rgba(20,88,140,.04)}
+.sh::after{content:'';position:absolute;bottom:-20px;left:-20px;width:80px;height:80px;border-radius:50%;background:rgba(0,102,96,.03)}
+.sh h2{font-family:var(--hd);font-size:20px;color:var(--pri2);margin-bottom:4px;position:relative}
+.sh p{font-size:12px;color:var(--tx2);max-width:520px;margin:0 auto;position:relative}
+
+/* CARD */
+.cd{background:var(--card);border:1px solid var(--bdr);border-radius:var(--r2);padding:20px;margin-bottom:14px;box-shadow:var(--shd);transition:.25s var(--ease)}
+.cd:hover{box-shadow:var(--shd2);transform:translateY(-1px)}
+.cd h3{font-family:var(--hd);font-size:16px;margin-bottom:7px}
+
+/* BADGES */
+.bg{display:inline-flex;padding:2px 7px;border-radius:8px;font-size:8px;font-weight:700;text-transform:uppercase;letter-spacing:.4px}
+.bg-b{background:var(--priL);color:var(--pri)}.bg-g{background:var(--grnL);color:var(--grn)}.bg-o{background:var(--orgL);color:var(--org)}.bg-r{background:var(--redL);color:var(--red)}.bg-p{background:var(--purL);color:var(--pur)}.bg-t{background:var(--tealL);color:var(--teal)}.bg-n{background:var(--navyL);color:var(--navy)}
+
+/* ===== PATIENT CARD ===== */
+.pt-card{background:linear-gradient(135deg,#EDF4FA,#FFF,#E8F5EC);border:2px solid #90CAF9;border-radius:var(--r3);padding:20px;margin:12px 0;position:relative;overflow:hidden;box-shadow:var(--shd)}
+.pt-card::before{content:'PATIENT';position:absolute;top:8px;right:12px;font-size:8px;font-weight:800;color:var(--pri);letter-spacing:1.5px;opacity:.3}
+.pt-card h4{color:var(--pri2);font-family:var(--hd);font-size:14px;margin-bottom:8px;display:flex;align-items:center;gap:6px}
+.pt-grid{display:grid;grid-template-columns:1fr 1fr;gap:4px 16px;font-size:12px}
+.pt-grid .lb{font-weight:700;color:var(--pri);font-size:10px;text-transform:uppercase;letter-spacing:.3px}
+.pt-grid .vl{font-family:var(--mn);font-size:11px;color:var(--tx)}
+
+/* ===== INSURANCE CARD REPLICA ===== */
+.ins-card{background:linear-gradient(135deg,#1565C0 0%,#0D47A1 100%);border-radius:var(--r2);padding:16px 18px;margin:10px 0;color:#fff;position:relative;overflow:hidden;box-shadow:0 4px 20px rgba(13,71,161,.2)}
+.ins-card::after{content:'';position:absolute;top:-20px;right:-20px;width:80px;height:80px;border-radius:50%;background:rgba(255,255,255,.06)}
+.ins-card .ins-name{font-size:14px;font-weight:800;letter-spacing:.5px;margin-bottom:10px}
+.ins-card .ins-grid{display:grid;grid-template-columns:1fr 1fr;gap:3px 14px;font-size:11px}
+.ins-card .ins-lb{font-size:8px;text-transform:uppercase;letter-spacing:.5px;opacity:.7;font-weight:600}
+.ins-card .ins-vl{font-family:var(--mn);font-size:11px}
+
+/* ===== REJECTION LETTER ===== */
+.rej-letter{background:var(--card);border:2px solid var(--red);border-radius:var(--r2);padding:0;margin:12px 0;overflow:hidden;box-shadow:var(--shd)}
+.rej-letter .rej-hdr{background:linear-gradient(135deg,var(--red),#8B1515);color:#fff;padding:10px 16px;font-size:11px;font-weight:700;display:flex;justify-content:space-between;align-items:center}
+.rej-letter .rej-body{padding:16px;font-size:12px;line-height:1.6}
+.rej-letter .rej-code{font-family:var(--mn);font-size:12px;color:var(--red);font-weight:700;background:var(--redL);padding:2px 8px;border-radius:4px}
+
+/* ===== DENIAL NOTICE ===== */
+.den-notice{background:var(--card);border:2px solid var(--org);border-radius:var(--r2);padding:0;margin:12px 0;overflow:hidden;box-shadow:var(--shd)}
+.den-notice .den-hdr{background:linear-gradient(135deg,var(--org),#8B3800);color:#fff;padding:10px 16px;font-size:11px;font-weight:700;display:flex;justify-content:space-between}
+.den-notice .den-body{padding:16px;font-size:12px;line-height:1.6}
+
+/* ===== EOB / REMITTANCE ===== */
+.eob-doc{background:var(--card);border:2px solid var(--teal);border-radius:var(--r2);padding:0;margin:12px 0;overflow:hidden;box-shadow:var(--shd)}
+.eob-doc .eob-hdr{background:linear-gradient(135deg,var(--teal),#004D40);color:#fff;padding:10px 16px;font-size:11px;font-weight:700}
+.eob-doc .eob-body{padding:14px}
+.eob-tbl{width:100%;border-collapse:collapse;font-size:11px;margin:6px 0}
+.eob-tbl th{background:var(--tealL);color:var(--teal);padding:5px 8px;font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.3px;text-align:left;border:1px solid #B2DFDB}
+.eob-tbl td{padding:5px 8px;border:1px solid var(--bdr);font-family:var(--mn);font-size:11px}
+.eob-tbl .money{text-align:right}
+
+/* ===== QUIZ ===== */
+.qz{background:var(--card);border:2px solid var(--bdr);border-radius:var(--r2);padding:18px;margin:12px 0}
+.qz h4{font-family:var(--hd);color:var(--pri2);margin-bottom:7px;font-size:13px}
+.os{display:flex;flex-direction:column;gap:5px;margin:8px 0}
+.op{padding:8px 14px;border-radius:var(--r);border:2px solid var(--bdr);background:var(--card);font-family:var(--bd);font-size:12px;cursor:pointer;transition:.2s;text-align:left;line-height:1.5}
+.op:hover{border-color:var(--pri);background:var(--priL)}
+.op.c{border-color:var(--grn);background:var(--grnL);color:var(--grn2)}.op.w{border-color:var(--red);background:var(--redL);color:var(--red)}.op.x{pointer-events:none;opacity:.85}
+.fb{margin-top:8px;padding:10px 12px;border-radius:var(--r);font-size:11px;display:none;line-height:1.6}
+.fb.c{display:block;background:var(--grnL);border:1px solid #A5D6A7;color:var(--grn2)}.fb.w{display:block;background:var(--redL);border:1px solid #EF9A9A;color:var(--red)}
+
+/* CALLOUT */
+.cl{border-radius:var(--r);padding:10px 12px;margin:8px 0;font-size:11px}
+.cl.tip{background:var(--grnL);border:1px solid #A5D6A7;border-left:4px solid var(--grn)}
+.cl.warn{background:var(--orgL);border:1px solid #FFCC80;border-left:4px solid var(--org)}
+.cl.info{background:var(--priL);border:1px solid #90CAF9;border-left:4px solid var(--pri)}
+.cl.think{background:var(--purL);border:1px solid #CE93D8;border-left:4px solid var(--pur)}
+.cl-l{font-weight:700;font-size:8px;text-transform:uppercase;letter-spacing:.5px;margin-bottom:2px}
+.cl.tip .cl-l{color:var(--grn)}.cl.warn .cl-l{color:var(--org)}.cl.info .cl-l{color:var(--pri)}.cl.think .cl-l{color:var(--pur)}
+
+/* FLIP CARD */
+.flip-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:8px;margin:10px 0}
+.flip{perspective:600px;height:90px;cursor:pointer}
+.flip-inner{position:relative;width:100%;height:100%;transition:transform .5s;transform-style:preserve-3d}
+.flip.flipped .flip-inner{transform:rotateY(180deg)}
+.flip-front,.flip-back{position:absolute;inset:0;backface-visibility:hidden;border-radius:var(--r);display:flex;align-items:center;justify-content:center;padding:8px;text-align:center;font-size:11px;font-weight:600;border:1px solid var(--bdr)}
+.flip-front{background:linear-gradient(135deg,var(--priL),#FFF);color:var(--pri2)}
+.flip-back{background:var(--grnL);color:var(--grn2);transform:rotateY(180deg);font-size:9px;font-weight:400;line-height:1.4}
+
+/* NEXT NAV */
+.nn{display:flex;justify-content:space-between;align-items:center;margin-top:18px;padding:14px 0;border-top:1px solid var(--bdr)}
+.btn-nx{display:inline-flex;align-items:center;gap:6px;padding:14px 32px;border-radius:24px;border:none;background:linear-gradient(135deg,var(--pri),var(--pri2));color:#fff;font-family:var(--bd);font-size:14px;font-weight:700;cursor:pointer;transition:.3s var(--ease);box-shadow:0 4px 18px rgba(20,88,140,.25);letter-spacing:.3px}
+.btn-nx:hover{transform:translateY(-3px);box-shadow:0 8px 28px rgba(20,88,140,.35)}
+.btn-pv{display:inline-flex;align-items:center;gap:4px;padding:9px 18px;border-radius:18px;border:2px solid var(--bdr);background:var(--card);color:var(--tx2);font-family:var(--bd);font-size:11px;font-weight:600;cursor:pointer}
+.btn-pv:hover{border-color:var(--pri);color:var(--pri)}
+
+.btn{display:inline-flex;align-items:center;gap:4px;padding:8px 18px;border-radius:14px;border:none;font-family:var(--bd);font-size:11px;font-weight:600;cursor:pointer;transition:.2s}
+.btn-p{background:var(--pri);color:#fff}.btn-g{background:var(--grn);color:#fff}
+.btn-comp{display:flex;align-items:center;justify-content:center;gap:4px;width:100%;padding:10px;border-radius:var(--r);border:2px solid var(--grn);background:var(--grnL);color:var(--grn2);font-family:var(--bd);font-size:13px;font-weight:700;cursor:pointer;margin-top:16px}
+.btn-comp:hover{background:var(--grn);color:#fff}.btn-comp.dn{background:var(--grn);color:#fff;cursor:default}
+
+/* INVESTIGATE LABEL */
+.inv-label{display:inline-flex;align-items:center;gap:4px;padding:4px 10px;border-radius:12px;background:var(--navyL);color:var(--navy);font-size:9px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px}
+
+/* SUMMARY */
+.sum-box{background:linear-gradient(135deg,var(--priL),#FFF,var(--grnL));border:2px solid var(--pri);border-radius:var(--r3);padding:18px;margin:10px 0}
+.sum-box h3{font-family:var(--hd);color:var(--pri2);margin-bottom:8px;font-size:14px}
+.sum-r{display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px dashed var(--bdr);font-size:11px}.sum-r:last-child{border:none}
+.sum-r .sl{font-weight:600;color:var(--tx2)}.sum-r .sv{font-weight:700;color:var(--pri)}
+.copy-a{width:100%;min-height:80px;padding:8px;border:2px dashed var(--pri);border-radius:var(--r);font-family:var(--mn);font-size:9px;background:var(--bg);margin:8px 0;white-space:pre-wrap}
+.btn-copy{display:inline-flex;align-items:center;gap:4px;background:var(--pur);color:#fff;padding:10px 22px;font-size:12px;font-weight:700;border:none;border-radius:var(--r);cursor:pointer;font-family:var(--bd)}.btn-copy:hover{background:var(--pri2)}
+textarea{width:100%;min-height:45px;padding:7px 9px;border:1px solid var(--bdr);border-radius:var(--r);font-family:var(--bd);font-size:11px;line-height:1.4;resize:vertical}
+textarea:focus{outline:none;border-color:var(--pri);box-shadow:0 0 0 2px rgba(20,88,140,.08)}
+textarea::placeholder{color:var(--tx3);font-style:italic}
+
+.timer{font-family:var(--mn);font-size:20px;font-weight:700;color:var(--red);text-align:center;margin:8px 0}
+.toast{position:fixed;top:56px;right:14px;padding:7px 14px;border-radius:var(--r);background:var(--grn);color:#fff;font-weight:700;font-size:10px;z-index:9999;transform:translateX(120%);transition:transform .4s cubic-bezier(.34,1.56,.64,1);box-shadow:var(--shd2)}.toast.show{transform:translateX(0)}
+.ftr{text-align:center;padding:12px;font-size:7px;color:var(--tx3);border-top:1px solid var(--bdr);background:var(--card)}
+.mob{display:none;padding:3px;border:none;background:0;cursor:pointer;color:var(--tx);font-size:15px}
+@media(max-width:768px){.hdr-st{display:none}.mob{display:block}.mn{padding:10px 8px 50px}.sh{padding:16px 8px}.sh h2{font-size:17px}.cd{padding:14px}.nb{padding:5px 7px;font-size:9px}.pt-grid,.ins-card .ins-grid{grid-template-columns:1fr}.flip-grid{grid-template-columns:repeat(auto-fill,minmax(100px,1fr))}.btn-nx{padding:11px 22px;font-size:12px}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast">+10!</div>
+
+<header class="hdr"><div class="hdr-in">
+<div class="hdr-logo"><h1>Claims Workflow Lab: Rejections, Denials & Fixes</h1><span>Workplace Simulation · Investigate · Diagnose · Resolve</span></div>
+<div class="hdr-st">
+<div class="pl pl-s">⭐<span id="sN">0</span></div>
+<div class="pl pl-k">🔥<span id="kN">0</span></div>
+<div class="pl pl-b">🏅<span id="bN">0</span></div>
+<button class="snd-b" onclick="tS()" id="sB">🔊</button>
+</div>
+<button class="mob" onclick="document.querySelector('.hdr-st').style.display=document.querySelector('.hdr-st').style.display==='flex'?'none':'flex'">☰</button>
+</div><div class="gp"><div class="gp-f" id="gF"></div></div></header>
+
+<nav class="nav-w"><div class="nav">
+<button class="nb a" data-t="0"><span class="tn">1</span>Welcome</button>
+<button class="nb" data-t="1"><span class="tn">2</span>Refresh</button>
+<button class="nb" data-t="2"><span class="tn">3</span>Submission</button>
+<button class="nb" data-t="3"><span class="tn">4</span>Clearinghouse</button>
+<button class="nb" data-t="4"><span class="tn">5</span>Rej vs Den</button>
+<button class="nb" data-t="5"><span class="tn">6</span>Investigation 1</button>
+<button class="nb" data-t="6"><span class="tn">7</span>Investigation 2</button>
+<button class="nb" data-t="7"><span class="tn">8</span>Investigation 3</button>
+<button class="nb" data-t="8"><span class="tn">9</span>Challenge</button>
+<button class="nb" data-t="9"><span class="tn">10</span>Summary</button>
+</div></nav>
+
+<main class="mn">
+
+<!-- ===== P0 WELCOME ===== -->
+<div class="pn a" id="p0">
+<div class="sh" style="background:linear-gradient(135deg,var(--priL),#FFF,var(--tealL))">
+<h2>Welcome — Claims Investigation Lab</h2>
+<p>You'll receive patient files, rejection letters, denial notices, and EOBs. Your job: investigate, diagnose the problem, and choose the correct resolution.</p>
+</div>
+<div class="cd" style="text-align:center">
+<h3>🔍 How This Works</h3>
+<p style="font-size:12px;color:var(--tx2);margin-bottom:12px">Each case gives you real documents. You compare, investigate, find the discrepancy, and decide: resubmit, appeal, correct and rebill, or bill the patient. No answers are handed to you — you find them.</p>
+<button class="btn-nx" onclick="go(1)">▶ Start Lab</button>
+</div>
+<div class="nn"><span></span><button class="btn-nx" onclick="go(1)">Begin: Quick Refresh →</button></div>
+</div>
+
+<!-- ===== P1 REFRESH ===== -->
+<div class="pn" id="p1">
+<div class="sh" style="background:linear-gradient(135deg,var(--goldL),#FFF,var(--priL))">
+<h2>Quick Refresh Cards</h2>
+<p>Flip any card for a reminder. Skip ahead if you're ready.</p>
+</div>
+<div class="flip-grid">
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Rejection</div><div class="flip-back">Never processed — returned BEFORE adjudication due to data/format errors</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Denial</div><div class="flip-back">Processed but NOT paid — payer reviewed and declined payment</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Adjudication</div><div class="flip-back">Payer's review and decision process on a submitted claim</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Clearinghouse</div><div class="flip-back">Electronic intermediary — scrubs claims for errors before payer receives them</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Clean Claim</div><div class="flip-back">No errors, passes all edits — does NOT guarantee payment</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Remittance (ERA)</div><div class="flip-back">Payer's payment explanation: what was paid, denied, adjusted, and why</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Appeal</div><div class="flip-back">Formal request to reconsider a DENIAL with supporting documentation</div></div></div>
+<div class="flip" onclick="this.classList.toggle('flipped')"><div class="flip-inner"><div class="flip-front">Resubmit</div><div class="flip-back">Send corrected claim after REJECTION — original was never processed</div></div></div>
+</div>
+<div class="nn"><button class="btn-pv" onclick="go(0)">← Welcome</button><button class="btn-nx" onclick="go(2)">Next: Claim Submission →</button></div>
+</div>
+
+<!-- ===== P2 SUBMISSION ===== -->
+<div class="pn" id="p2">
+<div class="sh" style="background:linear-gradient(135deg,var(--tealL),#FFF,var(--grnL))">
+<h2>Claim Submission & Clean Claim Logic</h2>
+<p>Understand the flow — and where problems get caught.</p>
+</div>
+<div class="cd"><h3>The Claim Journey</h3>
+<div style="display:flex;flex-wrap:wrap;gap:4px;align-items:center;justify-content:center;margin:10px 0">
+<div style="background:var(--priL);padding:8px 14px;border-radius:var(--r);font-weight:700;color:var(--pri);font-size:11px;text-align:center">Provider<br>Submits</div><span style="color:var(--tx3);font-size:18px">→</span>
+<div style="background:var(--tealL);padding:8px 14px;border-radius:var(--r);font-weight:700;color:var(--teal);font-size:11px;text-align:center">Clearinghouse<br>Scrubs Edits</div><span style="color:var(--tx3);font-size:18px">→</span>
+<div style="background:var(--orgL);padding:8px 14px;border-radius:var(--r);font-weight:700;color:var(--org);font-size:11px;text-align:center">Errors Found?<br>❌ REJECT</div><span style="color:var(--tx3);font-size:18px">→</span>
+<div style="background:var(--grnL);padding:8px 14px;border-radius:var(--r);font-weight:700;color:var(--grn);font-size:11px;text-align:center">Clean?<br>✓ Forward</div><span style="color:var(--tx3);font-size:18px">→</span>
+<div style="background:var(--purL);padding:8px 14px;border-radius:var(--r);font-weight:700;color:var(--pur);font-size:11px;text-align:center">Payer<br>Adjudicates</div>
+</div></div>
+
+<div class="qz" id="q2a"><h4>A biller submits an electronic claim. The clearinghouse accepts it and forwards it to the payer. The payer then applies the entire allowed amount to the patient's unmet deductible, resulting in a $0 payment. Which of the following most accurately characterizes this outcome?</h4><div class="os" id="q2a-os"></div><div class="fb" id="q2a-fb"></div></div>
+
+<button class="btn-comp" id="c2" onclick="cs(2)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(1)">← Refresh</button><button class="btn-nx" onclick="go(3)">Next: Clearinghouse Edits →</button></div>
+</div>
+
+<!-- ===== P3 CLEARINGHOUSE ===== -->
+<div class="pn" id="p3">
+<div class="sh" style="background:linear-gradient(135deg,var(--orgL),#FFF,var(--redL))">
+<h2>Clearinghouse & Front-End Errors</h2>
+<p>Learn what gets caught before the payer ever sees your claim.</p>
+</div>
+
+<div class="qz" id="q3a"><h4>A clearinghouse returns a claim with the edit message: "Rendering provider NPI does not match payer enrollment records." Which of the following actions would be LEAST appropriate as a first response?</h4><div class="os" id="q3a-os"></div><div class="fb" id="q3a-fb"></div></div>
+
+<div class="qz" id="q3b"><h4>Which of the following claim issues would typically be identified by the PAYER during adjudication rather than by the clearinghouse during front-end edits?</h4><div class="os" id="q3b-os"></div><div class="fb" id="q3b-fb"></div></div>
+
+<button class="btn-comp" id="c3" onclick="cs(3)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(2)">← Submission</button><button class="btn-nx" onclick="go(4)">Next: Rejection vs Denial →</button></div>
+</div>
+
+<!-- ===== P4 REJ VS DEN ===== -->
+<div class="pn" id="p4">
+<div class="sh" style="background:linear-gradient(135deg,var(--redL),#FFF,var(--orgL))">
+<h2>Rejection vs Denial Deep Dive</h2>
+<p>Stop guessing — learn to read the clues that distinguish them.</p>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
+<div class="cd" style="border-top:4px solid var(--org);margin:0"><h3 style="color:var(--org)">❌ Rejection</h3><p style="font-size:11px">Never entered the payer's system. Returned due to data/formatting errors. <strong>Fix → Resubmit.</strong></p></div>
+<div class="cd" style="border-top:4px solid var(--red);margin:0"><h3 style="color:var(--red)">🚫 Denial</h3><p style="font-size:11px">Payer received, reviewed, and decided NOT to pay. <strong>Investigate → Appeal or Correct & Rebill.</strong></p></div>
+</div>
+
+<div class="qz" id="q4a"><h4>A claim response states: "Claim adjudicated. Payment determination: $0.00. Remark: Authorization number not on file for this date of service." Based on the language used, how should this outcome be classified and what distinguishes it from a rejection?</h4><div class="os" id="q4a-os"></div><div class="fb" id="q4a-fb"></div></div>
+
+<button class="btn-comp" id="c4" onclick="cs(4)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(3)">← Clearinghouse</button><button class="btn-nx" onclick="go(5)">Next: Investigation Case 1 →</button></div>
+</div>
+
+<!-- ===== P5 INVESTIGATION 1 ===== -->
+<div class="pn" id="p5">
+<div class="sh" style="background:linear-gradient(135deg,var(--navyL),#FFF,var(--redL))">
+<h2>🔍 Investigation Case 1: The Rejected Claim</h2>
+<p>A claim was returned. The rejection notice is vague. Compare the documents to find the error yourself.</p>
+</div>
+
+<div class="inv-label">📂 Document A: Original Patient Registration File</div>
+<div class="pt-card">
+<h4>👤 Patient: Angela R. Martinez</h4>
+<div class="pt-grid">
+<div><span class="lb">DOB</span><span class="vl">06/14/1985</span></div>
+<div><span class="lb">Sex</span><span class="vl">Female</span></div>
+<div><span class="lb">Address</span><span class="vl">1420 Birch Lane, Oakville, IL 60532</span></div>
+<div><span class="lb">Phone</span><span class="vl">(630) 555-2918</span></div>
+<div><span class="lb">DOS</span><span class="vl">03/18/2025</span></div>
+<div><span class="lb">Service</span><span class="vl">99214 — Office Visit, Established, Moderate</span></div>
+<div><span class="lb">Diagnosis</span><span class="vl">M54.5 — Low back pain</span></div>
+<div><span class="lb">Rendering</span><span class="vl">Dr. Susan Park, MD — NPI: 1234567890</span></div>
+<div><span class="lb">Billing</span><span class="vl">Oakville Medical Group — NPI: 9876543210</span></div>
+<div><span class="lb">Charge</span><span class="vl">$275.00</span></div>
+</div>
+</div>
+
+<div class="inv-label">💳 Document B: Patient's Insurance Card (on file)</div>
+<div class="ins-card">
+<div class="ins-name">🏥 Summit Health Insurance — PPO</div>
+<div class="ins-grid">
+<div><span class="ins-lb">Subscriber</span><span class="ins-vl">Angela R. Martinez</span></div>
+<div><span class="ins-lb">Member ID</span><span class="ins-vl">SHI-7724190</span></div>
+<div><span class="ins-lb">Group</span><span class="ins-vl">GRP-4480</span></div>
+<div><span class="ins-lb">Payer ID</span><span class="ins-vl">SHI-001</span></div>
+<div><span class="ins-lb">Plan Type</span><span class="ins-vl">PPO</span></div>
+<div><span class="ins-lb">Effective</span><span class="ins-vl">01/01/2024</span></div>
+</div>
+</div>
+
+<div class="inv-label">📄 Document C: The Claim As Filed (what was actually submitted)</div>
+<div class="gc" style="border:2px solid var(--navy);background:linear-gradient(135deg,var(--navyL),#FFF)">
+<h4 style="color:var(--navy);font-size:12px;margin-bottom:8px">CMS-1500 — AS SUBMITTED</h4>
+<div class="pt-grid" style="font-size:11px">
+<div><span class="lb">1a. Member ID</span><span class="vl" style="font-weight:700">SHI-7724910</span></div>
+<div><span class="lb">2. Patient</span><span class="vl">Martinez, Angela R.</span></div>
+<div><span class="lb">3. DOB</span><span class="vl">06/14/1985</span></div>
+<div><span class="lb">3. Sex</span><span class="vl">F</span></div>
+<div><span class="lb">11. Group</span><span class="vl">GRP-4480</span></div>
+<div><span class="lb">21A. Dx</span><span class="vl">M54.5</span></div>
+<div><span class="lb">24A. DOS</span><span class="vl">03/18/2025</span></div>
+<div><span class="lb">24B. POS</span><span class="vl">11</span></div>
+<div><span class="lb">24D. CPT</span><span class="vl">99214</span></div>
+<div><span class="lb">24E. Ptr</span><span class="vl">A</span></div>
+<div><span class="lb">24J. Rend NPI</span><span class="vl">1234567890</span></div>
+<div><span class="lb">33. Billing</span><span class="vl">Oakville Medical Group</span></div>
+<div><span class="lb">33a. Bill NPI</span><span class="vl">9876543210</span></div>
+</div>
+</div>
+
+<div class="inv-label">📨 Document D: Rejection Notice (from clearinghouse)</div>
+<div class="rej-letter">
+<div class="rej-hdr"><span>❌ CLAIM REJECTION — RETURNED</span><span>03/20/2025</span></div>
+<div class="rej-body">
+<p><strong>Status:</strong> REJECTED — Claim not processed</p>
+<p><strong>Patient:</strong> Martinez, Angela R.</p>
+<p><strong>DOS:</strong> 03/18/2025</p>
+<p><strong>Error Code:</strong> <span class="rej-code">A7:001 — Subscriber identification information does not match payer enrollment records. Unable to verify subscriber. Claim returned to submitter.</span></p>
+<p style="font-size:10px;color:var(--tx3);margin-top:6px">This claim has not been forwarded to the payer. Please verify subscriber information against source documents and resubmit.</p>
+</div>
+</div>
+
+<div class="cl think"><div class="cl-l">🔍 Your Task</div>
+<p>The rejection notice does NOT tell you exactly what is wrong — only that "subscriber identification information does not match." You must compare <strong>Document B (insurance card)</strong> with <strong>Document C (the filed claim)</strong> field by field to find the discrepancy. Check every number, every letter.</p></div>
+
+<div class="qz" id="q5a"><h4>After carefully comparing all four documents, which specific discrepancy between the insurance card and the filed claim caused this rejection?</h4><div class="os" id="q5a-os"></div><div class="fb" id="q5a-fb"></div></div>
+
+<div class="qz" id="q5b"><h4>This claim was returned as "REJECTED — Claim not processed." A colleague suggests filing an appeal with Summit Health Insurance. Why is this advice incorrect?</h4><div class="os" id="q5b-os"></div><div class="fb" id="q5b-fb"></div></div>
+
+<button class="btn-comp" id="c5" onclick="cs(5)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(4)">← Rej vs Den</button><button class="btn-nx" onclick="go(6)">Next: Investigation Case 2 →</button></div>
+</div>
+
+<!-- ===== P6 INVESTIGATION 2 ===== -->
+<div class="pn" id="p6">
+<div class="sh" style="background:linear-gradient(135deg,var(--purL),#FFF,var(--orgL))">
+<h2>🔍 Investigation Case 2: The Denied Claim</h2>
+<p>This claim was processed and denied. The EOB uses a remark code. Figure out what went wrong by comparing the documents.</p>
+</div>
+
+<div class="inv-label">📂 Document A: Patient Registration & Encounter Record</div>
+<div class="pt-card">
+<h4>👤 Patient: Robert J. Chen</h4>
+<div class="pt-grid">
+<div><span class="lb">DOB</span><span class="vl">11/02/1970</span></div>
+<div><span class="lb">Insurance</span><span class="vl">Aetna PPO</span></div>
+<div><span class="lb">Member ID</span><span class="vl">AET-5590213</span></div>
+<div><span class="lb">Referral</span><span class="vl">Dr. Williams (PCP) referred to orthopedics</span></div>
+<div><span class="lb">DOS</span><span class="vl">02/25/2025</span></div>
+<div><span class="lb">Service</span><span class="vl">72148 — MRI Lumbar Spine w/o contrast</span></div>
+<div><span class="lb">Diagnosis</span><span class="vl">M54.5 — Low back pain</span></div>
+<div><span class="lb">Ordering Provider</span><span class="vl">Dr. Kim, Orthopedics</span></div>
+<div><span class="lb">Charge</span><span class="vl">$1,850.00</span></div>
+</div>
+</div>
+
+<div class="inv-label">📋 Document B: Aetna PPO Plan Requirements (from verification notes)</div>
+<div class="gc" style="border:2px solid var(--org);background:linear-gradient(135deg,var(--orgL),#FFF)">
+<h4 style="color:var(--org);font-size:12px;margin-bottom:6px">PAYER VERIFICATION — Aetna PPO</h4>
+<div class="pt-grid" style="font-size:11px">
+<div><span class="lb">Plan Status</span><span class="vl">Active</span></div>
+<div><span class="lb">Effective Date</span><span class="vl">01/01/2024</span></div>
+<div><span class="lb">MRI Requirement</span><span class="vl">Prior authorization REQUIRED for all advanced imaging (MRI, CT, PET)</span></div>
+<div><span class="lb">Auth Obtained?</span><span class="vl">No record of authorization request in system</span></div>
+<div><span class="lb">Referral</span><span class="vl">On file from PCP</span></div>
+<div><span class="lb">Deductible</span><span class="vl">$1,000 — $800 met</span></div>
+<div><span class="lb">Coinsurance</span><span class="vl">80/20 after deductible</span></div>
+</div>
+</div>
+
+<div class="inv-label">📨 Document C: Aetna Explanation of Benefits</div>
+<div class="den-notice">
+<div class="den-hdr"><span>🚫 EXPLANATION OF BENEFITS</span><span>Aetna · Processed: 03/15/2025</span></div>
+<div class="den-body">
+<p><strong>Claim #:</strong> <span style="font-family:var(--mn)">AET-CLM-882104</span></p>
+<p><strong>Patient:</strong> Chen, Robert J.</p>
+<p><strong>Provider:</strong> Oakville Imaging Center</p>
+<p><strong>DOS:</strong> 02/25/2025</p>
+<table class="eob-tbl">
+<thead><tr><th>CPT</th><th>Billed</th><th>Allowed</th><th>Paid</th><th>Remark Code</th></tr></thead>
+<tbody><tr><td style="font-family:var(--mn)">72148</td><td class="money">$1,850.00</td><td class="money">$0.00</td><td class="money">$0.00</td><td><span style="font-family:var(--mn);font-weight:700;color:var(--red)">PR-197</span></td></tr></tbody>
+</table>
+<p style="margin-top:8px;font-size:11px"><strong>Remark PR-197:</strong> <em>Precertification/authorization/notification absent.</em></p>
+<p style="font-size:10px;color:var(--tx3);margin-top:4px">This determination may be appealed within 180 days. Include applicable supporting documentation with your appeal.</p>
+</div>
+</div>
+
+<div class="cl think"><div class="cl-l">🔍 Your Task</div>
+<p>The EOB shows remark code <strong>PR-197</strong> with the description "Precertification/authorization/notification absent." It does NOT tell you whose fault it was or what specifically should have happened. Compare Document A (encounter record) with Document B (payer verification notes) to determine: <strong>Was auth required? Was it obtained? Who was responsible? What should be done now?</strong></p></div>
+
+<div class="qz" id="q6a"><h4>Based on comparing all three documents, which of the following most accurately identifies the root cause and responsible party for this denial?</h4><div class="os" id="q6a-os"></div><div class="fb" id="q6a-fb"></div></div>
+
+<div class="qz" id="q6b"><h4>The EOB states this decision can be appealed within 180 days with supporting documentation. Document B shows the patient's plan is active and the deductible is partially met. Given all of this information, what is the most strategically sound sequence of actions?</h4><div class="os" id="q6b-os"></div><div class="fb" id="q6b-fb"></div></div>
+
+<div class="qz" id="q6c"><h4>A new biller on the team asks: "Why didn't the clearinghouse catch this before it went to Aetna?" What is the most accurate explanation?</h4><div class="os" id="q6c-os"></div><div class="fb" id="q6c-fb"></div></div>
+
+<button class="btn-comp" id="c6" onclick="cs(6)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(5)">← Case 1</button><button class="btn-nx" onclick="go(7)">Next: Investigation Case 3 →</button></div>
+</div>
+
+<!-- ===== P7 INVESTIGATION 3 ===== -->
+<div class="pn" id="p7">
+<div class="sh" style="background:linear-gradient(135deg,var(--tealL),#FFF,var(--grnL))">
+<h2>🔍 Investigation Case 3: The Partial Payment Puzzle</h2>
+<p>This claim was paid — but not the amount the office expected. Multiple documents contain the clues. Can you reconcile them?</p>
+</div>
+
+<div class="inv-label">📂 Document A: Patient Account & Benefit Information</div>
+<div class="pt-card">
+<h4>👤 Patient: Maria L. Thompson</h4>
+<div class="pt-grid">
+<div><span class="lb">Insurance</span><span class="vl">UnitedHealthcare PPO</span></div>
+<div><span class="lb">Member ID</span><span class="vl">UHC-3301847</span></div>
+<div><span class="lb">Provider</span><span class="vl">Dr. James Rivera, MD</span></div>
+<div><span class="lb">Provider Status</span><span class="vl">Participating (PAR) with UHC</span></div>
+<div><span class="lb">DOS</span><span class="vl">03/10/2025</span></div>
+<div><span class="lb">Service</span><span class="vl">99214 — Office Visit, Established, Moderate</span></div>
+<div><span class="lb">Charge Entered</span><span class="vl">$320.00</span></div>
+<div><span class="lb">Copay Collected</span><span class="vl">$40.00 (specialist — collected at check-in)</span></div>
+</div>
+</div>
+
+<div class="inv-label">📋 Document B: Patient's Benefit Summary (from eligibility verification)</div>
+<div class="gc" style="border:2px solid var(--teal);background:linear-gradient(135deg,var(--tealL),#FFF)">
+<h4 style="color:var(--teal);font-size:12px;margin-bottom:6px">BENEFITS — UHC PPO</h4>
+<div class="pt-grid" style="font-size:11px">
+<div><span class="lb">Annual Deductible</span><span class="vl">$1,500</span></div>
+<div><span class="lb">Deductible Met</span><span class="vl">$1,500 / $1,500 — FULLY MET</span></div>
+<div><span class="lb">Coinsurance</span><span class="vl">Plan pays 80% / Patient pays 20%</span></div>
+<div><span class="lb">Specialist Copay</span><span class="vl">$40 per visit</span></div>
+<div><span class="lb">Out-of-Pocket Max</span><span class="vl">$6,000 — $1,920 applied so far</span></div>
+</div>
+</div>
+
+<div class="inv-label">📄 Document C: Filed Claim (as submitted)</div>
+<div class="gc" style="border:2px solid var(--navy);background:linear-gradient(135deg,var(--navyL),#FFF)">
+<h4 style="color:var(--navy);font-size:12px;margin-bottom:6px">CMS-1500 — AS SUBMITTED</h4>
+<div class="pt-grid" style="font-size:11px">
+<div><span class="lb">21A. Dx</span><span class="vl">M54.5</span></div>
+<div><span class="lb">24D. CPT</span><span class="vl">99214</span></div>
+<div><span class="lb">24E. Ptr</span><span class="vl">A</span></div>
+<div><span class="lb">24F. Charge</span><span class="vl">$320.00</span></div>
+<div><span class="lb">28. Total</span><span class="vl">$320.00</span></div>
+</div>
+</div>
+
+<div class="inv-label">📊 Document D: UHC Remittance Advice (ERA)</div>
+<div class="eob-doc">
+<div class="eob-hdr">ELECTRONIC REMITTANCE ADVICE — UnitedHealthcare</div>
+<div class="eob-body">
+<table class="eob-tbl">
+<thead><tr><th>CPT</th><th>Billed</th><th>Allowed</th><th>Adj. Reason</th><th>Paid</th><th>PR (Patient Resp.)</th></tr></thead>
+<tbody><tr>
+<td style="font-family:var(--mn)">99214</td>
+<td class="money">$320.00</td>
+<td class="money">$250.00</td>
+<td style="font-family:var(--mn);font-size:10px">CO-45: Charges exceed fee schedule</td>
+<td class="money">$200.00</td>
+<td class="money">$50.00</td>
+</tr></tbody>
+</table>
+<p style="font-size:10px;color:var(--tx3);margin-top:6px"><strong>CO-45:</strong> Charge exceeds fee schedule/maximum allowable. <strong>PR-3:</strong> Coinsurance amount.</p>
+</div>
+</div>
+
+<div class="cl think"><div class="cl-l">🔍 Your Task</div>
+<p>The office billed $320 but only received $200. The front desk says "insurance didn't pay enough." Your job: using all four documents, reconcile every dollar. Where did the $320 go? How much is the contractual write-off? How much is patient coinsurance? How much was the copay? What is the TOTAL patient responsibility? Is any amount missing or incorrect?</p></div>
+
+<div class="qz" id="q7a"><h4>Using Documents A through D, reconcile the full $320 charge. Which breakdown is correct?</h4><div class="os" id="q7a-os"></div><div class="fb" id="q7a-fb"></div></div>
+
+<div class="qz" id="q7b"><h4>The patient calls the office and says: "I already paid $40 when I came in. Now you're sending me a bill for $50 more? That doesn't seem right — my insurance should cover the rest." Using the documents, which response demonstrates the most accurate understanding of how the payment was calculated?</h4><div class="os" id="q7b-os"></div><div class="fb" id="q7b-fb"></div></div>
+
+<div class="qz" id="q7c"><h4>The office manager asks you to post this payment. On the patient ledger, which entry correctly reflects the transaction?</h4><div class="os" id="q7c-os"></div><div class="fb" id="q7c-fb"></div></div>
+
+<button class="btn-comp" id="c7" onclick="cs(7)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(6)">← Case 2</button><button class="btn-nx" onclick="go(8)">Next: Timed Challenge →</button></div>
+</div>
+
+<!-- ===== P8 TIMED CHALLENGE ===== -->
+<div class="pn" id="p8">
+<div class="sh" style="background:linear-gradient(135deg,var(--purL),#FFF,var(--roseL))">
+<h2>⚡ Timed Challenge</h2>
+<p>15 questions. 3 minutes. Every answer includes a rationale.</p>
+</div>
+<div style="text-align:center;margin:14px 0">
+<div class="timer" id="cT">3:00</div>
+<button class="btn-nx" id="cSt" onclick="startC()">⚡ Start Challenge</button>
+</div>
+<div id="cQ" style="display:none">
+<div class="qz" style="border-color:var(--pur)">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+<h4 id="cqT" style="margin:0;font-size:12px">Q</h4><span class="bg bg-p" id="cqN">Q1</span>
+</div>
+<p id="cqP" style="font-size:12px;margin-bottom:6px;line-height:1.5"></p>
+<div class="os" id="cqO"></div>
+<div class="fb" id="cq-fb"></div>
+</div></div>
+<div id="cD" style="display:none;padding:14px">
+<div style="text-align:center;margin-bottom:16px">
+<div style="font-size:36px;margin-bottom:4px">🏆</div>
+<h3 style="font-family:var(--hd)">Challenge Complete!</h3>
+<p style="font-size:18px;margin:6px 0">Score: <strong id="cSc">0</strong>/15</p>
+<button class="btn-nx" onclick="startC()" style="margin-top:8px">🔄 Retry Challenge</button>
+</div>
+
+<div class="cd" style="border:2px solid var(--pur);margin-top:20px">
+<h3 style="color:var(--pur);margin-bottom:4px">📖 Complete Question Study Guide</h3>
+<p style="font-size:11px;color:var(--tx2);margin-bottom:12px">Review every question with the correct answer and full rationale. Use this to study what you missed and reinforce what you got right.</p>
+<div id="studyGuide"></div>
+</div>
+</div>
+<button class="btn-comp" id="c8" onclick="cs(8)">✓ Complete</button>
+<div class="nn"><button class="btn-pv" onclick="go(7)">← Case 3</button><button class="btn-nx" onclick="go(9)">Next: Summary & Export →</button></div>
+</div>
+
+<!-- ===== P9 SUMMARY ===== -->
+<div class="pn" id="p9">
+<div class="sh" style="background:linear-gradient(135deg,var(--goldL),#FFF,var(--grnL))">
+<h2>🏆 Summary & Amplify Export</h2>
+<p>Review, reflect, and export your complete summary.</p>
+</div>
+<div style="text-align:center;padding:14px;margin-bottom:10px;background:linear-gradient(135deg,var(--goldL),#FFF,var(--grnL));border:2px solid var(--gold);border-radius:var(--r3)">
+<div style="font-size:36px">🏅</div>
+<h3 style="font-family:var(--hd);color:var(--grn2)">Claims Investigation Lab Complete!</h3>
+</div>
+
+<div class="sum-box">
+<h3>📊 Performance</h3>
+<div class="sum-r"><span class="sl">Total Score</span><span class="sv" id="ss1">0</span></div>
+<div class="sum-r"><span class="sl">Correct Answers</span><span class="sv" id="ss2">0</span></div>
+<div class="sum-r"><span class="sl">Sections Completed</span><span class="sv" id="ss3">0</span></div>
+<div class="sum-r"><span class="sl">Strongest Area</span><span class="sv" id="ss4">—</span></div>
+<div class="sum-r"><span class="sl">Needs Review</span><span class="sv" id="ss5">—</span></div>
+<div class="sum-r"><span class="sl">Focus Next</span><span class="sv" id="ss6">—</span></div>
+</div>
+
+<div class="cd"><h3>✍️ Your Reflection</h3>
+<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:700;color:var(--pri)">What did you learn?</label><textarea id="r1" placeholder="Key takeaways..."></textarea></div>
+<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:700;color:var(--pri)">What was challenging?</label><textarea id="r2" placeholder="Hardest parts..."></textarea></div>
+<div style="margin-bottom:8px"><label style="font-size:10px;font-weight:700;color:var(--pri)">What still confuses you?</label><textarea id="r3" placeholder="Questions remaining..."></textarea></div>
+<button class="btn btn-g" onclick="addRef()">✍️ Add Reflection to Summary</button>
+<div id="refMsg" style="display:none;margin-top:4px;font-size:10px;color:var(--grn);font-weight:600">✅ Reflection added!</div>
+</div>
+
+<div class="cd" style="border:2px solid var(--pur)">
+<h3 style="color:var(--pur)">📋 Copy for Amplify</h3>
+<button class="btn-copy" onclick="genSum()" style="margin-bottom:8px">📝 Generate Summary</button>
+<div class="copy-a" id="cpA" style="display:none"></div>
+<button class="btn-copy" id="cpB" onclick="cpSum()" style="display:none;margin-top:6px;background:var(--grn)">📋 COPY SUMMARY FOR AMPLIFY</button>
+<div id="cpM" style="display:none;margin-top:4px;padding:6px 10px;background:var(--grnL);border:1px solid #A5D6A7;border-radius:var(--r);font-size:11px;color:var(--grn2);font-weight:700;text-align:center">✅ Copied! Paste into Amplify.</div>
+</div>
+<div class="nn"><button class="btn-pv" onclick="go(8)">← Challenge</button><span></span></div>
+</div>
+
+</main>
+<footer class="ftr">© Hilary Homaii. All rights reserved.</footer>
+
+<script>
+const QDATA = {"q2a": {"q": "A biller submits an electronic claim. The clearinghouse accepts it and forwards it to the payer. The payer then applies the entire allowed amount to the patient's unmet deductible, resulting in a $0 payment. Which of the following most accurately characterizes this outcome?", "opts": [{"text": "This is a rejection because the provider received no payment", "correct": false, "rat": "A rejection means the claim was never processed. This claim WAS processed — the payer adjudicated it and applied the amount to the deductible. The $0 payment is normal adjudication, not a rejection.", "cat": "sub"}, {"text": "This is a denial because the insurance company refused to pay", "correct": false, "rat": "While $0 was paid, the claim was not denied for cause. The payer processed it correctly — the patient simply has unmet deductible. This is different from a denial where the payer refuses the claim.", "cat": "sub"}, {"text": "This is normal adjudication — the claim was processed correctly and the patient owes the deductible amount", "correct": true, "rat": "Correct! The claim was successfully adjudicated. The payer reviewed it, determined the allowed amount, and applied it to the patient&#39;s deductible. The $0 insurance payment is the correct outcome — the patient is responsible. This is normal processing, not a rejection or denial.", "cat": "sub"}, {"text": "This requires resubmission because the clearinghouse made an error", "correct": false, "rat": "Resubmission is for rejected claims. This claim was processed correctly — there is nothing to resubmit.", "cat": "sub"}]}, "q3a": {"q": "A clearinghouse returns a claim with the edit message: \"Rendering provider NPI does not match payer enrollment records.\" Which of the following actions would be LEAST appropriate as a first response?", "opts": [{"text": "Verify the rendering provider's NPI against the payer's enrollment records", "correct": false, "rat": "Verifying the NPI against enrollment records IS appropriate — it&#39;s one of the first things to check.", "cat": "clear"}, {"text": "Check whether the NPI was entered incorrectly due to a data entry error", "correct": false, "rat": "Checking for a typo IS appropriate — data entry errors are common.", "cat": "clear"}, {"text": "File an appeal with the payer requesting reconsideration of the NPI requirement", "correct": true, "rat": "Correct! Filing an appeal is for DENIED claims that were processed. This claim was REJECTED — it was never processed by the payer. Appeals require a claim to have been adjudicated first. The correct action is to fix the NPI issue and resubmit.", "cat": "clear"}, {"text": "Confirm that the rendering provider is enrolled with the payer", "correct": false, "rat": "Confirming enrollment IS appropriate — the provider may not be enrolled with this payer.", "cat": "clear"}]}, "q3b": {"q": "Which of the following claim issues would typically be identified by the PAYER during adjudication rather than by the clearinghouse during front-end edits?", "opts": [{"text": "Missing subscriber identification number", "correct": false, "rat": "Missing subscriber IDs are caught by clearinghouse edits — they are required data fields.", "cat": "clear"}, {"text": "Invalid date of service format", "correct": false, "rat": "Invalid date formats are formatting errors caught by clearinghouse edits.", "cat": "clear"}, {"text": "Prior authorization not obtained for the procedure", "correct": true, "rat": "Correct! Prior authorization is a clinical/coverage requirement evaluated by the PAYER during adjudication. The clearinghouse checks data formatting and completeness — it does not verify clinical requirements like authorizations, medical necessity, or coverage details.", "cat": "clear"}, {"text": "Invalid payer identification number", "correct": false, "rat": "Invalid payer IDs prevent claim routing — caught by the clearinghouse immediately.", "cat": "clear"}]}, "q4a": {"q": "A claim response states: \"Claim adjudicated. Payment determination: $0.00. Remark: Authorization number not on file for this date of service.\" Based on the language used, how should this outcome be classified and what distinguishes it from a rejection?", "opts": [{"text": "This is a rejection because the claim was returned with $0 payment", "correct": false, "rat": "The word \"adjudicated\" explicitly means the payer processed the claim. Rejections are returned WITHOUT adjudication.", "cat": "rejden"}, {"text": "This is a denial — the word \"adjudicated\" confirms the payer processed it, and \"payment determination: $0\" is their decision after review", "correct": true, "rat": "Correct! The key word is \"adjudicated\" — the payer received and processed the claim, then decided not to pay. This is a DENIAL. A rejection would say \"returned\" or \"not processed.\" The distinction matters because denials require appeals (formal reconsideration), while rejections require correction and resubmission.", "cat": "rejden"}, {"text": "This is a clearinghouse edit failure that requires resubmission with no changes", "correct": false, "rat": "The claim WAS processed — \"adjudicated\" proves that. It needs an appeal (if retro auth is possible), not simple resubmission.", "cat": "rejden"}]}, "q5a": {"q": "After carefully comparing all four documents, which specific discrepancy between the insurance card and the filed claim caused this rejection?", "opts": [{"text": "The group number was entered as GRP-4480 on the claim but the card shows a different group number", "correct": false, "rat": "Compare Document B and C carefully. The group number GRP-4480 appears correctly on both the insurance card and the filed claim. The error is elsewhere in the subscriber data.", "cat": "sim"}, {"text": "The patient name was entered as Martinez, Angela instead of Angela Martinez on the filed claim", "correct": false, "rat": "Check Document C again — the patient name reads Martinez, Angela R. which matches the insurance card. The name is not the issue.", "cat": "sim"}, {"text": "The Member ID on the filed claim reads SHI-7724910, but the insurance card shows SHI-7724190 — two digits are transposed in position 7 and 8", "correct": true, "rat": "Correct! Insurance card (Document B) shows Member ID: SHI-7724190. The filed claim (Document C) shows: SHI-7724910. The digits \"19\" were transposed to \"91\" — a data entry error. The rejection notice said \"subscriber identification does not match\" but did NOT specify what was wrong. You had to compare the documents yourself to find the transposed digits. Fix: correct Item 1a to SHI-7724190 and resubmit.", "cat": "sim"}, {"text": "The payer ID SHI-001 was accidentally entered in the Member ID field instead of the actual member number", "correct": false, "rat": "The payer ID (SHI-001) is a routing identifier and is not entered in Item 1a. Item 1a is for the Member ID, which is where the error lies. Compare the Member ID digits carefully between Document B and C.", "cat": "sim"}]}, "q5b": {"q": "This claim was returned as \"REJECTED — Claim not processed.\" A colleague suggests filing an appeal with Summit Health Insurance. Why is this advice incorrect?", "opts": [{"text": "Because the appeal deadline has already passed and it is too late to file", "correct": false, "rat": "The timing is not the issue. The issue is that you cannot appeal a claim that was never adjudicated. Rejections are returned before the payer processes them — there is no decision to appeal.", "cat": "sim"}, {"text": "Because rejected claims cannot be corrected or resubmitted under any circumstances", "correct": false, "rat": "You CAN fix and resubmit. The issue is that \"appeal\" is the wrong process for a rejected claim. Appeals are for denials — claims that were processed and received a payment decision.", "cat": "sim"}, {"text": "Because appeals apply to claims that were adjudicated and denied — this claim was never processed, so there is no payer decision to appeal. The correct action is to correct the error and resubmit.", "correct": true, "rat": "Correct! An appeal is a formal request to reconsider a DENIAL — a claim that was adjudicated and received a payment decision. This claim was REJECTED, meaning it was never processed by the payer at all. You cannot appeal a decision that was never made. The correct action is to correct the data entry error and RESUBMIT the claim as if it were new — because to the payer, it is.", "cat": "sim"}, {"text": "Because Summit Health Insurance is not the correct payer for this patient and the claim should go elsewhere", "correct": false, "rat": "Summit Health is the correct payer — the issue is a data entry error in the Member ID, not the wrong insurance company. The insurance card confirms Summit is correct.", "cat": "sim"}]}, "q6a": {"q": "Based on comparing all three documents, which of the following most accurately identifies the root cause and responsible party for this denial?", "opts": [{"text": "The referring physician Dr. Williams failed to submit the referral, and the payer denied because the referral was missing from the claim", "correct": false, "rat": "Document B shows the referral from the PCP IS on file. The EOB remark code PR-197 specifically says authorization/precertification is absent — not referral. These are different requirements. The referral was obtained; the authorization was not.", "cat": "sim"}, {"text": "The diagnosis code M54.5 does not support medical necessity for an MRI, and the payer denied because the clinical indication was insufficient", "correct": false, "rat": "The diagnosis M54.5 (low back pain) is a clinically valid reason for ordering a lumbar MRI. The EOB remark code PR-197 is about missing authorization — not about medical necessity. If it were a medical necessity denial, the remark code would be different.", "cat": "sim"}, {"text": "The Aetna plan requires prior authorization for MRI (Document B), but no authorization was ever requested (Document B shows no record). This is a pre-service workflow failure — scheduling or intake failed to verify and obtain the required auth before the MRI was performed.", "correct": true, "rat": "Correct! Document B clearly states: \"MRI Requirement: Prior authorization REQUIRED\" and \"Auth Obtained: No record of authorization request in system.\" The referral was on file (different requirement), but the prior authorization — which Aetna requires for all advanced imaging — was never requested. This is an upstream workflow failure. Someone in scheduling, intake, or the ordering provider team should have verified auth requirements and obtained the auth BEFORE the MRI was performed. The biller submitted the claim correctly — the failure happened before the service.", "cat": "sim"}, {"text": "The biller entered the wrong member ID, which prevented the payer from locating the authorization on file", "correct": false, "rat": "The Member ID AET-5590213 matches across documents and the claim was successfully adjudicated (not rejected). If the member ID were wrong, the claim would have been rejected — not denied. Adjudication + denial means the payer received and processed the claim, then denied it for a specific reason.", "cat": "sim"}]}, "q6b": {"q": "The EOB states this decision can be appealed within 180 days with supporting documentation. Document B shows the patient's plan is active and the deductible is partially met. Given all of this information, what is the most strategically sound sequence of actions?", "opts": [{"text": "Resubmit the identical claim immediately — the payer sometimes processes claims differently on the second attempt", "correct": false, "rat": "Resubmitting an identical claim after a denial will result in a duplicate claim denial. The underlying issue (missing auth) must be resolved first. A denial requires either an appeal or a corrected rebill — not a simple resubmission.", "cat": "sim"}, {"text": "Since the insurance denied the claim, bill the patient the full $1,850 — they are now financially responsible for the service", "correct": false, "rat": "The practice failed to obtain the required authorization — this was a workflow error, not a patient error. Billing the patient $1,850 for the practice&#39;s failure to obtain authorization raises ethical and potentially legal concerns. The practice should attempt to resolve with the payer first.", "cat": "sim"}, {"text": "Contact Aetna about retroactive authorization eligibility → if available, work with the ordering provider to obtain it with clinical documentation → submit a formal appeal with the auth number and records → if retro auth is unavailable, escalate internally as a workflow failure requiring process improvement", "correct": true, "rat": "Correct! Step 1: Contact Aetna to ask if they allow retroactive authorization for this service. Step 2: If retro auth is possible, coordinate with Dr. Kim to obtain the clinical documentation needed for the auth request. Step 3: Once auth is obtained, submit a formal appeal with the auth number, clinical records, and a cover letter referencing claim # AET-CLM-882104. Step 4: If retro auth is NOT possible, escalate to practice management — this is a systemic workflow gap that needs a process fix (e.g., auth checklist before scheduling advanced imaging). The patient has limited liability since the practice&#39;s workflow caused the problem.", "cat": "sim"}, {"text": "Write off the $1,850 as uncollectable since the authorization window has closed and there is nothing more the office can do", "correct": false, "rat": "$1,850 is too significant to write off without exhausting resolution options. The appeal window is 180 days — there is substantial time to pursue retroactive authorization and appeal. Writing off prematurely would be financially irresponsible.", "cat": "sim"}]}, "q6c": {"q": "A new biller on the team asks: \"Why didn't the clearinghouse catch this before it went to Aetna?\" What is the most accurate explanation?", "opts": [{"text": "The clearinghouse was malfunctioning that day and missed the error", "correct": false, "rat": "Some clearinghouses do flag known auth requirements, but this is not their primary function. The core issue is the distinction between clearinghouse responsibilities (data validation) and payer responsibilities (clinical/coverage review).", "cat": "sim"}, {"text": "Clearinghouses validate data formatting and completeness, not clinical requirements like prior authorization. Authorization verification is a payer function performed during adjudication — the clearinghouse correctly forwarded a data-clean claim.", "correct": true, "rat": "Correct! The clearinghouse validates data formatting and completeness — missing fields, invalid IDs, formatting errors. It does NOT evaluate clinical requirements like prior authorization, medical necessity, or coverage eligibility. Those are payer-side decisions made during adjudication. The claim was \"clean\" from a data perspective — the clearinghouse did its job correctly. The missing authorization is a clinical/administrative requirement that only the payer checks during claim review.", "cat": "sim"}, {"text": "The clearinghouse only handles paper claims and does not process electronic submissions", "correct": false, "rat": "The clearinghouse does not check authorization — but it IS involved in claim transmission. It does not \"only handle paper claims.\" Clearinghouses are the primary intermediary for electronic claim transmission.", "cat": "sim"}]}, "q7a": {"q": "Using Documents A through D, reconcile the full $320 charge. Which breakdown is correct?", "opts": [{"text": "UHC paid $200, write-off $80, patient owes only the $40 copay already collected — total accounted for: $320", "correct": false, "rat": "This breakdown is missing the coinsurance. The ERA shows PR (Patient Responsibility) of $50, which is the 20% coinsurance on the $250 allowed amount. And the write-off is $70, not $80.", "cat": "sim"}, {"text": "UHC paid $200, patient owes $120 (which includes everything), no write-off — total: $320", "correct": false, "rat": "The $120 figure incorrectly combines the write-off ($70) and coinsurance ($50). These are different things — the write-off is absorbed by the provider, while the coinsurance is billed to the patient. Also, the copay is separate from coinsurance.", "cat": "sim"}, {"text": "UHC paid $200 (80% of $250 allowed). Contractual write-off: $70 ($320 - $250, absorbed by PAR provider). Patient coinsurance: $50 (20% of $250). Plus $40 copay already collected. Total patient responsibility: $90.", "correct": true, "rat": "Correct! Full reconciliation: Billed $320 → Allowed $250 → Contractual write-off $70 (CO-45: charge exceeds fee schedule — Dr. Rivera absorbs this as PAR). Of the $250 allowed: UHC pays 80% = $200. Patient coinsurance 20% = $50 (PR-3). Plus $40 copay collected at visit. Total patient responsibility = $50 + $40 = $90. Total accounted: $200 (UHC) + $70 (write-off) + $50 (coinsurance) = $320. The copay is separate and already collected.", "cat": "sim"}, {"text": "UHC paid $200, patient owes $70 write-off plus $50 coinsurance plus $40 copay = $160 total patient responsibility", "correct": false, "rat": "The $70 is NOT patient responsibility — it is a contractual adjustment (CO-45) that the PAR provider must absorb. The adjustment reason code CO (Contractual Obligation) means the provider agreed to this reduction by being a participating provider. Only PR (Patient Responsibility) amounts can be billed to the patient.", "cat": "sim"}]}, "q7b": {"q": "The patient calls the office and says: \"I already paid $40 when I came in. Now you're sending me a bill for $50 more? That doesn't seem right — my insurance should cover the rest.\" Using the documents, which response demonstrates the most accurate understanding of how the payment was calculated?", "opts": [{"text": "You are right, Mrs. Thompson — the $40 copay should have covered your entire share. I will adjust the $50 off your account as a billing error.", "correct": false, "rat": "This is incorrect — she does owe the additional $50. The copay and coinsurance are different types of patient responsibility. Telling her she doesn&#39;t owe more would create an account discrepancy.", "cat": "sim"}, {"text": "The $50 you owe is because insurance didn't pay the full $320 that was charged. The remaining $70 gap is split between you and the provider.", "correct": false, "rat": "The $70 is the contractual write-off (CO-45) between the provider and UHC. This is NOT patient responsibility. Dr. Rivera absorbs this as a participating provider. The patient&#39;s $50 is coinsurance (PR-3), not the write-off amount.", "cat": "sim"}, {"text": "Mrs. Thompson, your $40 copay is a flat fee for the visit — that is separate from coinsurance. UHC allows $250 for this service. They paid 80% ($200) and your 20% share is $50. The copay and coinsurance are two different types of patient cost-sharing. The $70 difference between the $320 charge and $250 allowed amount is a provider write-off — you are not responsible for that portion.", "correct": true, "rat": "Correct! This accurately explains all the moving parts: the copay ($40) is a flat per-visit fee separate from coinsurance. The allowed amount ($250) is the negotiated rate. The $70 difference is absorbed by the provider. The coinsurance ($50) is the patient&#39;s 20% share of the allowed amount after insurance pays 80%. These are two different types of cost-sharing — both are legitimate patient responsibility.", "cat": "sim"}, {"text": "The insurance only covers part of the bill. After they paid $200, you still owe $70 for the part they didn't cover, plus your $40 copay. Your total is $110.", "correct": false, "rat": "This response incorrectly tells the patient she owes $70. The $70 is the contractual adjustment (CO-45) — the provider&#39;s write-off as a PAR provider. The patient&#39;s responsibility is $50 coinsurance (PR-3) plus the $40 copay already collected. Total patient responsibility: $90, not $110.", "cat": "sim"}]}, "q7c": {"q": "The office manager asks you to post this payment. On the patient ledger, which entry correctly reflects the transaction?", "opts": [{"text": "Charge: $320.00 | Insurance Payment: -$200.00 | Patient Payment (copay): -$40.00 | Balance: $80.00", "correct": false, "rat": "This entry is missing the contractual adjustment. Without posting the $70 write-off, the account will show a $70 balance that cannot be collected — creating a permanently inaccurate ledger.", "cat": "sim"}, {"text": "Charge: $320.00 | Contractual Adj: -$70.00 | Insurance Payment: -$200.00 | Patient Copay: -$40.00 | Patient Balance: $50.00 (coinsurance owed)", "correct": true, "rat": "Correct! All components must be posted: the original charge, the contractual adjustment (CO-45 write-off), the insurance payment, the copay already collected, and the remaining patient balance (coinsurance). This zeros out correctly: $320 - $70 - $200 - $40 = $10... wait — $320 - $70 = $250; $250 - $200 = $50; $50 copay already collected leaves $50 coinsurance balance. The ledger should show the $50 outstanding patient balance.", "cat": "sim"}, {"text": "Charge: $320.00 | Insurance Payment: -$250.00 | Patient Payment: -$70.00 | Balance: $0.00", "correct": false, "rat": "This entry incorrectly shows a $0 balance. The $50 coinsurance has not been collected yet — only the $40 copay was collected at the visit. The patient still owes $50.", "cat": "sim"}]}};
+
+
+function shuffle(arr) {
+  var a = arr.slice();
+  for (var i = a.length - 1; i > 0; i--) {
+    var j = Math.floor(Math.random() * (i + 1));
+    var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+  }
+  return a;
+}
+
+function renderAllQuizzes() {
+  Object.keys(QDATA).forEach(function(qid) {
+    var qz = QDATA[qid];
+    var container = document.getElementById(qid + '-os');
+    if (!container) return;
+    container.innerHTML = '';
+    var shuffled = shuffle(qz.opts);
+    shuffled.forEach(function(opt) {
+      var btn = document.createElement('button');
+      btn.className = 'op';
+      btn.textContent = opt.text;
+      (function(o) {
+        btn.addEventListener('click', function() {
+          chkData(btn, o.correct, qid, o.rat, o.cat);
+        });
+      })(opt);
+      container.appendChild(btn);
+    });
+  });
+}
+
+function chkData(btn, correct, qid, rat, cat) {
+  var par = btn.parentElement;
+  var fb = document.getElementById(qid + '-fb');
+  if (par.querySelector('.op.c,.op.w')) return;
+  par.querySelectorAll('.op').forEach(function(o) { o.classList.add('x'); });
+  if (correct) {
+    btn.classList.add('c');
+    fb.className = 'fb c';
+    fb.innerHTML = '<strong>&#10003; Correct!</strong> ' + rat;
+    aP(10, cat);
+    sOk();
+  } else {
+    btn.classList.add('w');
+    par.querySelectorAll('.op').forEach(function(o) {
+      if (o._isCorrect) o.classList.add('c');
+    });
+    fb.className = 'fb w';
+    fb.innerHTML = '<strong>&#10007; Incorrect.</strong> ' + rat;
+    rS();
+    sNo();
+  }
+}
+
+function renderAllQuizzesWithCorrectFlag() {
+  Object.keys(QDATA).forEach(function(qid) {
+    var qz = QDATA[qid];
+    var container = document.getElementById(qid + '-os');
+    if (!container) return;
+    container.innerHTML = '';
+    var shuffled = shuffle(qz.opts);
+    shuffled.forEach(function(opt) {
+      var btn = document.createElement('button');
+      btn.className = 'op';
+      btn.textContent = opt.text;
+      btn._isCorrect = opt.correct;
+      (function(o) {
+        btn.addEventListener('click', function() {
+          chkData(btn, o.correct, qid, o.rat, o.cat);
+        });
+      })(opt);
+      container.appendChild(btn);
+    });
+  });
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+  renderAllQuizzesWithCorrectFlag();
+});
+
+let sc=0,strk=0,bdg=0,sOn=true,cor=0,refAdded=false;
+const cats={sub:0,clear:0,rejden:0,sim:0};
+const catMax={sub:1,clear:2,rejden:1,sim:6};
+const comp=new Set();
+let actx=null;
+function gC(){if(!actx)actx=new(window.AudioContext||window.webkitAudioContext)();return actx}
+function tn(f,d,t='sine',v=.07){if(!sOn)return;try{const c=gC(),o=c.createOscillator(),g=c.createGain();o.type=t;o.frequency.value=f;g.gain.setValueAtTime(v,c.currentTime);g.gain.exponentialRampToValueAtTime(.001,c.currentTime+d);o.connect(g);g.connect(c.destination);o.start();o.stop(c.currentTime+d)}catch(e){}}
+function sOk(){tn(523,.08);setTimeout(()=>tn(659,.08),50);setTimeout(()=>tn(784,.1),100)}
+function sNo(){tn(330,.14,'sine',.05)}
+function sDn(){tn(523,.06);setTimeout(()=>tn(659,.06),35);setTimeout(()=>tn(784,.06),70);setTimeout(()=>tn(1047,.12),105)}
+function tS(){sOn=!sOn;document.getElementById('sB').textContent=sOn?'🔊':'🔇'}
+
+function aP(n,cat){sc+=n;cor++;if(cat)cats[cat]=(cats[cat]||0)+1;strk++;document.getElementById('sN').textContent=sc;document.getElementById('kN').textContent=strk;const t=document.getElementById('toast');t.textContent=`+${n}`;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),1100)}
+function rS(){strk=0;document.getElementById('kN').textContent=0}
+
+function go(i){
+  document.querySelectorAll('.nb').forEach(b=>b.classList.toggle('a',parseInt(b.dataset.t)===i));
+  document.querySelectorAll('.pn').forEach(p=>{const pi=parseInt(p.id.replace('p',''));p.classList.toggle('a',pi===i)});
+  window.scrollTo({top:0,behavior:'smooth'});
+  document.getElementById('gF').style.width=Math.round((i+1)/10*100)+'%';
+  if(i===9)genAutoSum();
+}
+document.querySelectorAll('.nb').forEach(b=>b.addEventListener('click',()=>go(parseInt(b.dataset.t))));
+
+// chk replaced by chkData (see QDATA block above)
+
+function cs(i){if(comp.has(i))return;comp.add(i);const b=document.getElementById('c'+i);if(b){b.classList.add('dn');b.textContent='✓ Done!'}document.querySelector(`.nb[data-t="${i}"]`)?.classList.add('d');aP(20);setTimeout(()=>sDn(),50)}
+
+// CHALLENGE
+const cQs=[
+{q:'A claim response reads: "Returned — subscriber ID format invalid. Claim not processed." Based on this language, this outcome is best classified as:',o:['A denial requiring an appeal','A rejection requiring correction and resubmission','Normal adjudication with $0 payment','A partial payment requiring patient billing'],a:1,r:'"Returned" and "not processed" = rejection. Fix the subscriber ID and resubmit. Appeals are only for adjudicated (processed) denials.'},
+{q:'Which entity evaluates whether a service meets medical necessity criteria — the clearinghouse or the payer?',o:['The clearinghouse evaluates medical necessity during front-end edits','The payer evaluates medical necessity during adjudication','Both evaluate medical necessity equally','Neither — medical necessity is self-determined by the provider'],a:1,r:'The clearinghouse checks DATA formatting. The PAYER evaluates clinical criteria like medical necessity during adjudication.'},
+{q:'A payer denies a claim stating: "Service excluded from plan benefits." The biller confirms the patient has secondary insurance. What is the most appropriate next action?',o:['Appeal the denial with the primary payer','Submit to secondary insurance with the primary EOB','Bill the patient the full amount immediately','Write off the balance'],a:1,r:'Always exhaust secondary insurance before billing the patient. Submit with the primary EOB showing the denial.'},
+{q:'A PAR provider charges $400 for a service. The payer allows $300. The $100 difference is:',o:['Patient responsibility — bill the patient','A contractual write-off the provider must absorb','A billing error requiring correction','An amount to appeal'],a:1,r:'PAR providers accept the allowed amount. The difference ($100) is a contractual adjustment/write-off — cannot be billed to the patient.'},
+{q:'A claim denied for "prior authorization not obtained" was caused by a failure at which point in the workflow?',o:['During claim submission by the biller','During adjudication by the payer','Upstream — at scheduling, intake, or clinical ordering before the service','At the clearinghouse during front-end edits'],a:2,r:'Authorization must be obtained BEFORE the service is performed. This is an upstream failure — scheduling or intake should have verified auth requirements.'},
+{q:'A claim passes all clearinghouse edits and is forwarded to the payer. This guarantees:',o:['The claim will be paid in full','The claim has no data formatting errors','The service is medically necessary','The patient has active coverage'],a:1,r:'Passing clearinghouse edits means the claim is formatted correctly. It does NOT guarantee payment, coverage, or medical necessity — those are determined by the payer.'},
+{q:'Allowed: $250. Deductible: fully met. Coinsurance: 80/20. Insurance pays:',o:['$250','$200','$50','$320'],a:1,r:'Deductible met → full $250 subject to coinsurance → 80% × $250 = $200. Patient owes 20% = $50.'},
+{q:'A duplicate claim denial means:',o:['The claim was rejected for formatting errors','The original claim was already processed/paid — the second submission is denied','The clearinghouse blocked the claim','The patient has duplicate insurance coverage'],a:1,r:'Duplicate = payer already processed the original. Verify the original was paid before taking any action.'},
+{q:'The term "adjudicated" in a payer response confirms that:',o:['The claim was rejected before processing','The payer received, reviewed, and made a payment determination on the claim','The clearinghouse approved the claim format','The provider accepted assignment'],a:1,r:'"Adjudicated" = the payer completed their review and decision process. This distinguishes denials from rejections.'},
+{q:'A claim denied for "patient not eligible on DOS." After investigation, you confirm coverage WAS active. Best action:',o:['Bill the patient since insurance denied it','Resubmit the exact same claim with no changes','Appeal with documentation proving active eligibility on the date of service','Write off the balance'],a:2,r:'If you have proof of active coverage, appeal the denial with eligibility documentation.'},
+{q:'Copay vs coinsurance: a patient paid a $40 copay at the visit and now owes $50 coinsurance. How do you explain this?',o:['There was a billing error — they should only owe one or the other','The copay is a flat visit fee; coinsurance is their percentage share of the allowed amount — they are separate types of cost-sharing','The $50 should be written off since they paid the copay','The copay covers the coinsurance'],a:1,r:'Copay = flat fee for the visit. Coinsurance = percentage of the allowed amount. Both are legitimate, separate patient responsibilities.'},
+{q:'A transposed digit in the member ID caused a claim rejection. The correct fix is:',o:['File an appeal with the payer','Correct the member ID and resubmit — no appeal needed since it was never processed','Bill the patient since the insurance rejected it','Submit to secondary insurance instead'],a:1,r:'Rejections = never processed. Fix the data error and resubmit. Appeals are only for processed (adjudicated) denials.'},
+{q:'A $1,850 MRI claim was denied for missing prior authorization. The practice failed to obtain auth. The LEAST appropriate action is:',o:['Check if retroactive authorization is possible','Contact the ordering provider about the authorization failure','Bill the patient $1,850 as their responsibility','Escalate to management to fix the workflow gap'],a:2,r:'Billing the patient for a practice workflow failure is the least appropriate. Try retro auth first, then escalate internally if not possible.'},
+{q:'The contractual write-off on a claim represents:',o:['The amount the patient must pay','The difference between the billed charge and the payer allowed amount — absorbed by PAR providers','A billing error that needs correction','The amount applied to the deductible'],a:1,r:'Write-off = charge minus allowed amount. PAR providers contractually agree to absorb this difference.'},
+{q:'When a denial notice includes the phrase "you may submit a formal appeal within 180 days," this confirms the claim was:',o:['Rejected — returned without processing','Adjudicated — processed and a payment determination was made','Lost by the clearinghouse','Never received by the payer'],a:1,r:'Appeal rights only exist for adjudicated claims. If the payer offers appeal options, the claim WAS processed and denied — not rejected.'}
+];
+let cIdx=0,cCor=0,cInt=null;
+
+function startC(){
+  cIdx=0;cCor=0;document.getElementById('cD').style.display='none';document.getElementById('cSt').style.display='none';
+  document.getElementById('cQ').style.display='block';
+  for(let i=cQs.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[cQs[i],cQs[j]]=[cQs[j],cQs[i]]}
+  showCQ();let s=180;document.getElementById('cT').textContent='3:00';clearInterval(cInt);
+  cInt=setInterval(()=>{s--;const m=Math.floor(s/60),sec=s%60;document.getElementById('cT').textContent=`${m}:${sec.toString().padStart(2,'0')}`;if(s<=0){clearInterval(cInt);endC()}},1000);
+}
+let cShuffled=[];
+function showCQ(){
+  if(cIdx>=cQs.length){endC();return}
+  const q=cQs[cIdx];
+  document.getElementById('cqN').textContent=`Q${cIdx+1}/${cQs.length}`;
+  document.getElementById('cqP').textContent=q.q;
+  const od=document.getElementById('cqO');od.innerHTML='';
+  document.getElementById('cq-fb').className='fb';document.getElementById('cq-fb').innerHTML='';
+  // Build shuffled options: keep track of which shuffled index is correct
+  const indices=q.o.map((_,i)=>i);
+  for(let i=indices.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[indices[i],indices[j]]=[indices[j],indices[i]];}
+  cShuffled=indices;
+  indices.forEach((origIdx,displayIdx)=>{
+    const b=document.createElement('button');
+    b.className='op';
+    b.textContent=q.o[origIdx];
+    b.addEventListener('click',()=>cAns(displayIdx));
+    od.appendChild(b);
+  });
+}
+function cAns(displayIdx){
+  const q=cQs[cIdx];const fb=document.getElementById('cq-fb');
+  const allBtns=document.querySelectorAll('#cqO .op');
+  if(allBtns[0].classList.contains('x'))return;
+  allBtns.forEach(b=>b.classList.add('x'));
+  const clickedOrigIdx=cShuffled[displayIdx];
+  const correctDisplayIdx=cShuffled.indexOf(q.a);
+  if(clickedOrigIdx===q.a){
+    allBtns[displayIdx].classList.add('c');fb.className='fb c';fb.innerHTML='<strong>✓ Correct!</strong> '+q.r;cCor++;aP(10);sOk();
+  }else{
+    allBtns[displayIdx].classList.add('w');
+    if(allBtns[correctDisplayIdx])allBtns[correctDisplayIdx].classList.add('c');
+    fb.className='fb w';fb.innerHTML='<strong>✗ Incorrect.</strong> '+q.r;rS();sNo();
+  }
+  setTimeout(()=>{cIdx++;showCQ()},1800);
+}
+function endC(){
+  clearInterval(cInt);
+  document.getElementById('cQ').style.display='none';
+  document.getElementById('cD').style.display='block';
+  document.getElementById('cSc').textContent=cCor;
+  document.getElementById('cSt').style.display='inline-flex';
+  if(cCor>=12){bdg++;document.getElementById('bN').textContent=bdg;setTimeout(()=>sDn(),50)}
+
+  // Generate study guide with ALL questions, correct answers, and rationales
+  const guide=document.getElementById('studyGuide');
+  let html='';
+  cQs.forEach((q,i)=>{
+    const correctLetter=String.fromCharCode(65+q.a);
+    const correctText=q.o[q.a];
+    html+=`
+    <div style="background:var(--bg);border:1px solid var(--bdr);border-radius:var(--r);padding:14px;margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+        <span style="font-size:10px;font-weight:700;color:var(--pur);background:var(--purL);padding:2px 8px;border-radius:6px">Q${i+1}</span>
+      </div>
+      <p style="font-size:12px;font-weight:600;color:var(--tx);margin-bottom:8px;line-height:1.5">${q.q}</p>
+      <div style="margin-bottom:8px">
+        ${q.o.map((opt,oi)=>`<div style="padding:4px 10px;margin:3px 0;border-radius:6px;font-size:11px;line-height:1.4;${oi===q.a?'background:var(--grnL);border:1px solid #A5D6A7;color:var(--grn2);font-weight:700':'background:var(--card);border:1px solid var(--bdr);color:var(--tx2)'}">${String.fromCharCode(65+oi)}) ${opt}${oi===q.a?' ✓':''}</div>`).join('')}
+      </div>
+      <div style="background:var(--grnL);border:1px solid #A5D6A7;border-radius:var(--r);padding:8px 10px;font-size:10px;color:var(--grn2);line-height:1.5">
+        <strong style="font-size:9px;text-transform:uppercase;letter-spacing:.4px">✓ Correct Answer: ${correctLetter}) ${correctText}</strong><br>
+        <span style="color:var(--grn2)">${q.r}</span>
+      </div>
+    </div>`;
+  });
+  guide.innerHTML=html;
+}
+
+// SUMMARY
+function genAutoSum(){
+  document.getElementById('ss1').textContent=sc+' pts';document.getElementById('ss2').textContent=cor;document.getElementById('ss3').textContent=comp.size+'/8';
+  const cn={sub:'Claim Submission Logic',clear:'Clearinghouse & Front-End Edits',rejden:'Rejection vs Denial Analysis',sim:'Investigation & Resolution'};
+  let mx='',mxV=0,mn='',mnV=Infinity;
+  Object.keys(cats).forEach(k=>{const p=catMax[k]?cats[k]/catMax[k]:0;if(p>mxV){mxV=p;mx=k}if(p<mnV){mnV=p;mn=k}});
+  document.getElementById('ss4').textContent=cn[mx]||'—';document.getElementById('ss5').textContent=cn[mn]||'—';
+  const foc={sub:'Review clean claim logic and adjudication outcomes',clear:'Study clearinghouse edits vs payer adjudication responsibilities',rejden:'Practice distinguishing rejections from denials using response language',sim:'Work through more investigation cases with patient files and EOBs'};
+  document.getElementById('ss6').textContent=foc[mn]||'Review all sections';
+}
+
+let reflectionText='';
+function addRef(){
+  reflectionText=`What I learned: ${document.getElementById('r1')?.value||'(not answered)'}\nWhat was challenging: ${document.getElementById('r2')?.value||'(not answered)'}\nWhat still confuses me: ${document.getElementById('r3')?.value||'(not answered)'}`;
+  refAdded=true;document.getElementById('refMsg').style.display='block';setTimeout(()=>document.getElementById('refMsg').style.display='none',3000);
+}
+
+function genSum(){
+  genAutoSum();if(!refAdded)addRef();
+  const txt=`CLAIMS WORKFLOW LAB — STUDENT SUMMARY
+=============================================
+PERFORMANCE
+---------------------------------------------
+Score: ${sc} pts | Correct: ${cor} | Sections: ${comp.size}/8
+Strongest: ${document.getElementById('ss4').textContent}
+Review: ${document.getElementById('ss5').textContent}
+Focus: ${document.getElementById('ss6').textContent}
+
+REFLECTION
+---------------------------------------------
+${reflectionText}
+=============================================`;
+  document.getElementById('cpA').textContent=txt;document.getElementById('cpA').style.display='block';document.getElementById('cpB').style.display='inline-flex';
+}
+function cpSum(){
+  const t=document.getElementById('cpA').textContent;
+  navigator.clipboard.writeText(t).then(()=>{document.getElementById('cpM').style.display='block';setTimeout(()=>document.getElementById('cpM').style.display='none',4000)}).catch(()=>{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);document.getElementById('cpM').style.display='block';setTimeout(()=>document.getElementById('cpM').style.display='none',4000)});
+}
+</script>
+</body>
+</html>
